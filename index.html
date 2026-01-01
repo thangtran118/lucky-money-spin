@@ -256,67 +256,73 @@
         'textFontSize': 24, // Size chữ
         'textOrientation': 'horizontal', // Chữ nằm ngang
         'textAlignment': 'outer', // Căn chỉnh văn bản ra bên ngoài bánh xe.
-        'numSegments': 10, // Số ô
+        'numSegments': 11, // Số ô (đã thêm ô 1.000.000 VNĐ)
         'responsive': true,
         'segments': [{
             'fillStyle': '#FF0000',
             'text': 'Ô mất lượt',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 25,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#ab6f03',
             'text': '1.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 28,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#CC9966',
             'text': '2.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 26,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#666633',
             'text': '5.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 24,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#CC9933',
             'text': '10.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 22,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#0099FF',
             'text': '20.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 20,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#FF9999',
             'text': '50.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 18,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#00FF66',
             'text': '100.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 16,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#FF9966',
             'text': '200.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 16,
             'textFillStyle': '#ffffff'
         }, {
             'fillStyle': '#00FFFF',
             'text': '500.000 VNĐ',
-            'size': winwheelPercentToDegrees(10),
+            'size': winwheelPercentToDegrees(9.09),
             'textFontSize': 16,
+            'textFillStyle': '#ffffff'
+        }, {
+            'fillStyle': '#FFD700',
+            'text': '1.000.000 VNĐ',
+            'size': winwheelPercentToDegrees(9.09),
+            'textFontSize': 14,
             'textFillStyle': '#ffffff'
         }],
         'animation': // Chỉ định hình động để sử dụng.
@@ -378,6 +384,22 @@
     }
 
     function randomAngle() {
+        // =====================================================
+        // LOGIC FORCE KẾT QUẢ - DỄ DÀNG CUSTOM
+        // Kiểm tra xem có bắt buộc kết quả cụ thể không
+        // =====================================================
+        if (typeof CONFIG.FORCE_RESULT_INDEX === 'number' && CONFIG.FORCE_RESULT_INDEX !== null) {
+            // Force vào ô cụ thể (0-10)
+            // Mỗi ô có góc = 360/11 = 32.727 độ
+            const segmentAngle = 360 / 11;
+            const targetSegment = CONFIG.FORCE_RESULT_INDEX + 1; // +1 vì segment bắt đầu từ 1
+            // Trả về góc ngẫu nhiên trong khoảng của segment đó
+            return targetSegment * segmentAngle - Math.random() * (segmentAngle - 2) - 1;
+        }
+        
+        // =====================================================
+        // LOGIC RANDOM THEO TỶ LỆ (khi không force)
+        // =====================================================
         let raties = JSON.parse(localStorage.getItem("raties"));
         if (!raties) {
             localStorage.setItem("raties", JSON.stringify(CONFIG.raties));
@@ -392,7 +414,8 @@
             index++;
         }
         let randomIndex = Math.floor(Math.random() * 10000000) % arr.length;
-        return arr[randomIndex] * 36 - Math.random() * 34 - 1;
+        const segmentAngle = 360 / 11; // Cập nhật cho 11 ô
+        return arr[randomIndex] * segmentAngle - Math.random() * (segmentAngle - 2) - 1;
     }
 
     // -------------------------------------------------------
@@ -468,7 +491,9 @@
     // -------------------------------------------------------
     function alertPrize(indicatedSegment) {
         dem++;
-        tiendalixi = indicatedSegment.text.replace(".000 VNĐ", "");
+        // Xử lý mệnh giá tiền - hỗ trợ cả 1.000.000 VNĐ
+        tiendalixi = indicatedSegment.text.replace(".000.000 VNĐ", ".000").replace(".000 VNĐ", "");
+        
         if (dem < solanquay) { // Check xem đã hết lượt quay chưa
             // theWheel.rotationAngle = 0; // Đặt lại góc bánh xe về 0 độ.
             theWheel.rotationAngle = theWheel.rotationAngle + 36000;
@@ -501,13 +526,16 @@
 
                 document.getElementById("annhantien").style.display = ""; // Hiển thị nút nhận tiền
                 // document.getElementById("xuatsotien").src = "img/" + indicatedSegment.text.replace(".000 VNĐ", "") + "k.jpg"; // Xuất ảnh tiền
-                const urlMoney = "img/" + indicatedSegment.text.replace(".000 VNĐ", "") + "kk.jpg";
+                
+                // Xử lý tên file ảnh cho các mệnh giá
+                let imageFileName = indicatedSegment.text.replace(".000.000 VNĐ", "000").replace(".000 VNĐ", "");
+                const urlMoney = "img/" + imageFileName + "kk.jpg";
                 const text = "Bạn nhận được " + indicatedSegment.text;
                 Swal.fire({
                         title: "<h3 style='color:white'>" + 'Xin chúc mừng' + "</h3>",
                         text: text,
                         imageUrl: urlMoney,
-                        imageWidth: 400 + (indicatedSegment.text.replace(".000 VNĐ", "").length > 1 ? 100 : 0),
+                        imageWidth: 400 + (indicatedSegment.text.replace(".000.000 VNĐ", "").replace(".000 VNĐ", "").length > 1 ? 100 : 0),
                         imageHeight: 200,
                         imageAlt: 'Custom image',
                         background: '#CD3333',
@@ -527,8 +555,26 @@
         // document.getElementById("xuatsotienpopup").src = "img/" + tiendalixi + "k.jpg";
         demnhantien++;
         tongtienlixi += Number(tiendalixi);
-        document.getElementById("sotiendalixi").innerHTML = tongtienlixi + ".000 VNĐ";
-        lichsulixi += "Người " + demnhantien + " : " + tiendalixi + ".000 VNĐ<br/>";
+        
+        // Hiển thị tổng tiền với format phù hợp
+        let displayTotal = tongtienlixi >= 1000 ? 
+            (tongtienlixi / 1000).toFixed(0) + ".000.000 VNĐ" : 
+            tongtienlixi + ".000 VNĐ";
+        if (tongtienlixi < 1000) {
+            displayTotal = tongtienlixi + ".000 VNĐ";
+        } else if (tongtienlixi % 1000 === 0) {
+            displayTotal = (tongtienlixi / 1000) + ".000.000 VNĐ";
+        } else {
+            displayTotal = Math.floor(tongtienlixi / 1000) + "." + (tongtienlixi % 1000).toString().padStart(3, '0') + ".000 VNĐ";
+        }
+        
+        document.getElementById("sotiendalixi").innerHTML = displayTotal;
+        
+        // Hiển thị lịch sử với format phù hợp
+        let displayValue = tiendalixi >= 1000 ? 
+            (tiendalixi / 1000) + ".000.000 VNĐ" : 
+            tiendalixi + ".000 VNĐ";
+        lichsulixi += "Người " + demnhantien + " : " + displayValue + "<br/>";
         document.getElementById("lichsulixi").innerHTML = lichsulixi;
     }
 </script>
